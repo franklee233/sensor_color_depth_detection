@@ -1,0 +1,192 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta name="MobileOptimized" content="300"/>
+<meta name="viewport" content="width=device-width, user-scalable=no"/>
+<title>DOF Calc</title>
+<style type="text/css">
+body {
+	width: 300px;
+	margin: 0 auto;
+	font-family: Georgia, "Times New Roman", Times, serif;
+	font-size: 14px;
+}
+input[type=button] {
+	color: #555;
+    height: 25px;
+    background-color: #EFF5FE;
+    border:	1px solid #999;
+	border-radius: 3px;
+	font-size: 14px;
+}
+input[type=text] {
+	height: 18px;
+	font-size: 13px;
+}
+</style>
+<script type="text/javascript">
+    function enterClick()
+    {
+        if (event.keyCode == 13)
+        {
+            event.preventDefault()
+            document.getElementById('calc_btn').click()
+        }
+    }
+    
+	function ClickCalc()
+	{
+		NO_DLMF_HALF_DIAG=Math.sqrt(36*36+24*24)/2
+		COC35=0.03
+		
+		focal_length=parseFloat(eval(document.getElementById("focal_length").value))
+		apeture=parseFloat(eval(document.getElementById("apeture").value))
+		subject_distance=parseFloat(eval(document.getElementById("subject_distance").value))
+		dlmf=parseFloat(eval(document.getElementById("dlmf").value))
+		sensor_ratio_hori=parseFloat(eval(document.getElementById("sensor_ratio_hori").value))
+		sensor_ratio_vert=parseFloat(eval(document.getElementById("sensor_ratio_vert").value))
+		
+		ratio_hori=sensor_ratio_hori/Math.sqrt(sensor_ratio_hori*sensor_ratio_hori+sensor_ratio_vert*sensor_ratio_vert)
+		ratio_vert=sensor_ratio_vert/Math.sqrt(sensor_ratio_hori*sensor_ratio_hori+sensor_ratio_vert*sensor_ratio_vert)
+		view_angle_diag=Math.atan(NO_DLMF_HALF_DIAG/dlmf/focal_length)/Math.PI*360
+		view_angle_hori=Math.atan(NO_DLMF_HALF_DIAG*ratio_hori/dlmf/focal_length)/Math.PI*360
+		view_angle_vert=Math.atan(NO_DLMF_HALF_DIAG*ratio_vert/dlmf/focal_length)/Math.PI*360
+		
+		hyperfocal_distance=focal_length*focal_length/apeture/(COC35/dlmf)/1000
+		near_distance=hyperfocal_distance*subject_distance/(hyperfocal_distance+subject_distance)
+		far_distance=hyperfocal_distance*subject_distance/(hyperfocal_distance-subject_distance)
+		dof=far_distance-near_distance
+		
+		//blur_index=Math.pow(Math.tan(view_angle_diag/360*Math.PI),2)/dof
+		blur_index=Math.pow(NO_DLMF_HALF_DIAG/dlmf/focal_length,2)/dof
+		
+		document.getElementById("hyperfocal_distance").value=hyperfocal_distance.toFixed(6)
+		document.getElementById("dof").value=dof.toFixed(6)
+		document.getElementById("view_angle_diag").value=view_angle_diag.toFixed(2)
+		document.getElementById("view_angle_hori").value=view_angle_hori.toFixed(2)
+		document.getElementById("view_angle_vert").value=view_angle_vert.toFixed(2)
+		document.getElementById("blur_index").value=blur_index.toFixed(4)
+	}
+    
+	function WriteResult()
+	{
+		if (document.getElementById("result_div").innerHTML=="")
+		{
+			document.getElementById("result_div").innerHTML+=
+			"<table width=\"300\" border=\"0\"><tr>"
+			+"<td width=\"5\">mm</td>"
+			+"<td width=\"5\">F/</td>"
+			+"<td width=\"5\">Dist</td>"
+			+"<td width=\"5\">DLMF</td>"
+			+"<td width=\"5\">Inf(m)</td>"
+			+"<td width=\"5\">AoV(&#176;)</td>"
+			+"<td width=\"40\">DoF(m)</td></tr></table>"
+		}
+
+		result="<table width=\"300\" border=\"0\"><tr>"
+		+"<td width=\"20\">"+eval(document.getElementById("focal_length").value)+"</td>"
+		+"<td width=\"25\">"+eval(document.getElementById("apeture").value)+"</td>"
+		+"<td width=\"25\">"+eval(document.getElementById("subject_distance").value)+"</td>"
+		+"<td width=\"20\">"+eval(document.getElementById("dlmf").value)+"</td>"
+		+"<td width=\"40\">"+parseFloat(document.getElementById("hyperfocal_distance").value).toFixed(2)+"</td>"
+		+"<td width=\"40\">"+document.getElementById("view_angle_diag").value+"</td>"
+		+"<td width=\"40\">"+document.getElementById("dof").value+"</td></tr></table>"
+		document.getElementById("result_div").innerHTML+=result
+	}
+
+	function ClearResult()
+	{
+		document.getElementById("result_div").innerHTML=""
+	}
+
+	function ClearLast()
+	{
+		if (document.getElementById("result_div").innerHTML!="")
+		{
+			var lastIndexOfTable=document.getElementById("result_div").innerHTML.lastIndexOf("<table")
+			document.getElementById("result_div").innerHTML=document.getElementById("result_div").innerHTML.substring(0,lastIndexOfTable-1)
+			var lastIndexOfTable=document.getElementById("result_div").innerHTML.lastIndexOf("<table")
+			var firstIndexOfTable=document.getElementById("result_div").innerHTML.indexOf("<table")
+			if (firstIndexOfTable==lastIndexOfTable)
+			{
+				document.getElementById("result_div").innerHTML=""
+			}
+		}
+	}
+</script>
+</head>
+
+<body>
+<div>
+    <br><br><br><br><br><br><br>
+	<form id="form1" name="form1" method="post">
+		<label for="focal_length"></label>
+		<input name="focal_length" type="text" id="focal_length" size="15" onkeypress="enterClick()" autofocus/>
+		&nbsp;&nbsp;Focal Length (mm)
+	</form>
+	<br>
+	<form id="form2" name="form2" method="post">
+		<label for="apeture"></label>
+		<input name="apeture" type="text" id="apeture" size="15" onkeypress="enterClick()"/>
+		&nbsp;&nbsp;Apeture (f-number)
+	</form>
+	<br>
+	<form id="form3" name="form3" method="post">
+		<label for="subject_distance"></label>
+		<input name="subject_distance" type="text" id="subject_distance" value="1" size="15" onkeypress="enterClick()"/>
+		&nbsp;&nbsp;Subject Distance (m)
+	</form>
+	<br>
+	<form id="form4" name="form4" method="post">
+		<label for="dlmf"></label>
+		<input name="dlmf" type="text" id="dlmf" value="1" size="15" onkeypress="enterClick()"/>
+		&nbsp;&nbsp;DLMF (Crop Factor)
+	</form>
+	<br>
+	<form id="form5" name="form5" method="post">
+		<label for="sensor_ratio"></label>
+		<input name="sensor_ratio_hori" type="text" id="sensor_ratio_hori" value="3" size="5" onkeypress="enterClick()"/>&nbsp;
+		&#215;&nbsp;
+		<input name="sensor_ratio_vert" type="text" id="sensor_ratio_vert" value="2" size="5" onkeypress="enterClick()"/>	
+		&nbsp;&nbsp;Sensor Ratio
+	</form><form id="form6" name="form6" method="post">
+		<p>
+		<!-- <input type="button" name="calc_btn" id="calc_btn" onclick="ClickCalc()" value=" Calc "/>
+		<input type="button" name="write_btn" id="write_btn" onclick="WriteResult()" value=" Write "/> -->
+		<input type="button" name="calc_btn" id="calc_btn" onclick="ClickCalc();WriteResult();" value=" Calc "/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		<input type="button" name="clearlst_btn" id="clearlst_btn" onclick="ClearLast()" value=" Undo "/>
+		&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+		<input type="button" name="clear_btn" id="clear_btn" onclick="ClearResult()" value=" Clear "/>
+		</p>
+	</form>
+	<form id="form7" name="form7" method="post">
+		<label for="hyperfocal_distance"></label>
+		<input name="hyperfocal_distance" type="text" id="hyperfocal_distance" size="15" />
+		&nbsp;&nbsp;Hyperfocal Distance (m)
+	</form>
+	<br>
+	<form id="form7" name="form7" method="post">
+		<label for="dof"></label>
+		<input name="dof" type="text" id="dof" size="15" />
+		&nbsp;&nbsp;Depth of Field (m)
+	</form>
+	<br>
+	<form id="form8" name="form8" method="post">
+		<label for="view_angle"></label>
+		<input name="view_angle_diag" type="text" id="view_angle_diag" size="5" />
+		<input name="view_angle_hori" type="text" id="view_angle_hori" size="5" />
+		<input name="view_angle_vert" type="text" id="view_angle_vert" size="5" />
+		&nbsp;&nbsp;View Angle (&#176;)
+	</form>
+	<br>
+	<form id="form9" name="form9" method="post">
+		<label for="blur_index"></label>
+		<input name="blur_index" type="text" id="blur_index" size="15" />
+		&nbsp;&nbsp;Blur Index
+	</form>
+	<br>
+</div>
+<div id="result_div"></div>
+</body>
+</html>
